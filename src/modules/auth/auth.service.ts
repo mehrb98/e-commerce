@@ -1,10 +1,11 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { RegisterDTO } from "../dto/register.dto";
-import { AuthResponse } from "../dto/auth.dto";
+import { RegisterDTO } from "./dto/register.dto";
+import { AuthResponse } from "./dto/auth.dto";
 import * as bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
 import { JwtService } from "@nestjs/jwt";
+import { LoginDTO } from "./dto/login.dto";
 
 @Injectable()
 export class AuthService {
@@ -67,6 +68,8 @@ export class AuthService {
         }
     }
 
+    // Generate JWT tokens(access and refresh)
+
     private async generateTokens(userId: string, email: string): Promise<{
         accessToken: string;
         refreshToken: string;
@@ -82,7 +85,9 @@ export class AuthService {
         return { accessToken, refreshToken };
     }
 
-    private async updateRefreshToken(params: {
+    // Update refresh token in database
+
+    async updateRefreshToken(params: {
         userId: string;
         refreshToken: string;
     }): Promise<void> {
@@ -92,5 +97,84 @@ export class AuthService {
             where: { id: userId },
             data: { refreshToken }
         });
+    }
+
+    // Refresh tokens
+
+    async refreshToken(userId: string): Promise<AuthResponse> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                firstname: true,
+                lastname: true,
+                role: true,
+            },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException("User not found");
+        }
+
+        const tokens = await this.generateTokens(user.id, user.email);
+
+        await this.updateRefreshToken({
+            userId: user.id,
+            refreshToken: tokens.refreshToken,
+        });
+
+        return { user, ...tokens };
+    }
+
+    // Log out user
+
+    async logout(userId: string): Promise<void> {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { refreshToken: null },
+        });
+    }
+
+    // Login user
+
+    async login(loginDto: LoginDTO): Promise<AuthResponse> {
+        const { email, password } = loginDto;
+
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                email: true,
+                firstname: true,
+                lastname: true,
+                role: true,
+                password: true,
+            },
+        });
+
+        
+        if (!user) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        const isPasswordValid = await bcrypt
+            .compare(password, user.password);
+
+        if (!isPasswordValid) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        const tokens = await this.generateTokens(user.id, user.email);
+
+        await this.updateRefreshToken({
+            userId: user.id,
+            refreshToken: tokens.refreshToken,
+        });
+
+        // Exclude password from returned user object
+        const { password: _, ...userWithoutPassword } = user;
+
+        return { user: userWithoutPassword, ...tokens };
     }
 }
