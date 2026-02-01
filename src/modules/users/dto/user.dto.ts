@@ -17,12 +17,14 @@ export class UserResponse {
     @ApiProperty({ 
         description: "User first name",
         example: "John",
+        nullable: true,
     })
     firstname: string | null;
 
     @ApiProperty({ 
         description: "User last name",
         example: "Doe",
+        nullable: true,
     })
     lastname: string | null;
 

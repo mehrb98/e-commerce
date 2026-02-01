@@ -29,13 +29,9 @@ async function bootstrap() {
 
     // Enable Swagger docs 
     const config = new DocumentBuilder()
-        .setTitle('NestJS API')
+        .setTitle('E-Commerce API')
         .setDescription('API documentation for the application')
         .setVersion('1.0')
-        .addTag("auth", "Authentication related endpoints")
-        .addTag("users", "User management related endpoints")
-        // .addTag("products", "Product management related endpoints")
-        // .addTag("products", "Product management related endpoints")
         .addBearerAuth({
                 type: 'http',
                 scheme: 'bearer',

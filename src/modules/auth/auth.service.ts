@@ -16,8 +16,7 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
-    // Registration logic
-
+    // ===== Registration logic =====
     async register(registerDto: RegisterDTO): Promise<AuthResponse> {
         const { email, password, firstname, lastname } = registerDto;
 
@@ -51,12 +50,15 @@ export class AuthService {
                 },
             });
 
-            const tokens = await this.generateTokens(user.id, user.email);
+            const tokens = await this
+                .generateTokens(user.id, user.email);
 
             await this.updateRefreshToken({
                     userId: user.id,
                     refreshToken: tokens.refreshToken,
             });
+
+            console.log("User registered successfully: " + tokens);
 
             return { user, ...tokens };
         } catch (error) {
@@ -68,8 +70,7 @@ export class AuthService {
         }
     }
 
-    // Generate JWT tokens(access and refresh)
-
+    // ===== Generate JWT tokens(access and refresh) =====
     private async generateTokens(userId: string, email: string): Promise<{
         accessToken: string;
         refreshToken: string;
@@ -85,8 +86,7 @@ export class AuthService {
         return { accessToken, refreshToken };
     }
 
-    // Update refresh token in database
-
+    // ===== Update refresh token in database =====
     async updateRefreshToken(params: {
         userId: string;
         refreshToken: string;
@@ -99,8 +99,7 @@ export class AuthService {
         });
     }
 
-    // Refresh tokens
-
+    // ===== Refresh tokens =====
     async refreshToken(userId: string): Promise<AuthResponse> {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -127,8 +126,7 @@ export class AuthService {
         return { user, ...tokens };
     }
 
-    // Log out user
-
+    // ===== Log out user =====
     async logout(userId: string): Promise<void> {
         await this.prisma.user.update({
             where: { id: userId },
@@ -136,8 +134,7 @@ export class AuthService {
         });
     }
 
-    // Login user
-
+    // ===== Login user =====
     async login(loginDto: LoginDTO): Promise<AuthResponse> {
         const { email, password } = loginDto;
 

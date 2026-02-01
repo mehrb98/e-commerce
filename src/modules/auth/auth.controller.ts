@@ -12,8 +12,8 @@ import { ApiBearerAuth, ApiOperation, ApiResponse } from "@nestjs/swagger";
 export class AuthController {
     constructor(private readonly authService: AuthService) {} 
 
-    // Register a new user
 
+    // ===== Register a new user =====
     @Post("register")
     @HttpCode(201)
     @ApiOperation({ 
@@ -45,8 +45,8 @@ export class AuthController {
         return this.authService.register(register_dto);
     }
 
-    // Refresh user token
 
+    // ===== Refresh user token =====
     @Post("refresh")
     @HttpCode(HttpStatus.OK)
     @UseGuards(RefreshTokenGuard)
@@ -74,8 +74,7 @@ export class AuthController {
         return this.authService.refreshToken(userId);
     }
 
-    // Logout user
-
+    // ===== Logout user =====
     @Post("logout")
     @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)
@@ -102,8 +101,7 @@ export class AuthController {
         return { message: "Logout successful" };
     }
 
-    // Login user
-
+    // ===== Login user =====
     @Post("login")
     @ApiOperation({
         summary: 'User login',
