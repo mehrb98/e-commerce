@@ -71,7 +71,6 @@ export class ProductsController {
         } 
     })      
     async findAll(@Query() query: QueryProductDTO) {
-        console.log('Query Parameters:', query);
         return this.productsService.findAll(query);
     }
 
